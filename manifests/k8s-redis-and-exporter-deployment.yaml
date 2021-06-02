@@ -27,6 +27,7 @@ spec:
         volumeMounts:
         - mountPath: /tls-data
           name: tls-volume
+
       - name: redis-exporter
         image: oliver006/redis_exporter:latest
         resources:
@@ -38,6 +39,24 @@ spec:
         volumeMounts:
         - mountPath: /tls-data
           name: tls-volume
+        env:
+        - name: REDIS_EXPORTER_DEBUG
+          value: 'true'
+        - name: REDIS_EXPORTER_NAMESPACE
+          value: ''
+        # # - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
+        # #   value: 'true'
+        # - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
+        #   value: /tls-data/xx
+        # - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
+        #   value: /tls-data/xx
+        # - name: REDIS_EXPORTER_TLS_SERVER_KEY_FILE
+        #   value: /tls-data/xx
+        # - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
+        #   value: /tls-data/xx
+        # - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
+        #   value: /tls-data/xx
+
       volumes:
       - name: tls-volume
         hostPath:
