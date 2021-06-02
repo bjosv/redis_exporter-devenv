@@ -1,0 +1,8 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  # Add a mount from the host to the kind node
+  extraMounts:
+  - hostPath: /tmp/tls-data
+    containerPath: /tls-data
