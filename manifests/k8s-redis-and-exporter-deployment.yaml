@@ -27,6 +27,8 @@ spec:
         volumeMounts:
         - mountPath: /tls-data
           name: tls-volume
+        command: ["redis-server"]
+        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--tls-auth-clients", "no", "--loglevel", "verbose"]
 
       - name: redis-exporter
         image: oliver006/redis_exporter:latest
@@ -44,18 +46,24 @@ spec:
           value: 'true'
         - name: REDIS_EXPORTER_NAMESPACE
           value: ''
-        # # - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
-        # #   value: 'true'
-        # - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
-        #   value: /tls-data/xx
-        # - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
-        #   value: /tls-data/xx
-        # - name: REDIS_EXPORTER_TLS_SERVER_KEY_FILE
-        #   value: /tls-data/xx
-        # - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
-        #   value: /tls-data/xx
-        # - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
-        #   value: /tls-data/xx
+
+        # Redis client
+        - name: REDIS_ADDR
+          value: 'rediss://localhost:6379'
+        - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
+          value: 'true'
+        - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
+          value: '/tls-data/ca.crt'
+        - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
+          value: '/tls-data/redis.key'
+        - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
+          value: '/tls-data/redis.crt'
+
+        # Metrics endpoint
+        - name: REDIS_EXPORTER_TLS_SERVER_KEY_FILE
+          value: '/tls-data/redis.key'
+        - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
+          value: '/tls-data/redis.crt'
 
       volumes:
       - name: tls-volume

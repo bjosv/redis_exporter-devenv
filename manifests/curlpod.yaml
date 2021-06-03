@@ -8,3 +8,11 @@ spec:
     image: curlimages/curl
     command: ["/bin/sh"]
     args: ["-c", "while true; do sleep 10; done;"]
+    volumeMounts:
+    - mountPath: /tls-data
+      name: tls-volume
+  volumes:
+  - name: tls-volume
+    hostPath:
+      # directory location on host
+      path: /tls-data
