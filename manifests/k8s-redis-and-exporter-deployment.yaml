@@ -28,7 +28,7 @@ spec:
         - mountPath: /tls-data
           name: tls-volume
         command: ["redis-server"]
-        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--tls-auth-clients", "no", "--loglevel", "verbose"]
+        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--tls-auth-clients", "no", "--loglevel", "debug"]
 
       - name: redis-exporter
         image: oliver006/redis_exporter:latest
