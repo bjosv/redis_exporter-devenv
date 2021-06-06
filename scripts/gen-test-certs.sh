@@ -15,7 +15,12 @@ generate_cert() {
     local keyfile=${dir}/${name}.key
     local certfile=${dir}/${name}.crt
 
-    [ -f $keyfile ] || openssl genrsa -out $keyfile 2048
+    echo "*********************************************************"
+    echo "Generate keypair for $name using faketime=$faketime"
+    echo "*********************************************************"
+    echo
+
+    openssl genrsa -out $keyfile 2048
     openssl req \
         -new -sha256 \
         -subj "/O=Redis Test/CN=$cn" \
@@ -32,18 +37,21 @@ generate_cert() {
                 -out $certfile
 }
 
-# Create CA
+generate_ca() {
+    openssl genrsa -out ${dir}/ca.key 4096
+    openssl req \
+            -x509 -new -nodes -sha256 \
+            -key ${dir}/ca.key \
+            -days 3650 \
+            -subj '/O=Redis Test/CN=Certificate Authority' \
+            -out ${dir}/ca.crt
+}
+
+
 mkdir -p ${dir}
-[ -f ${dir}/ca.key ] || openssl genrsa -out ${dir}/ca.key 4096
-openssl req \
-    -x509 -new -nodes -sha256 \
-    -key ${dir}/ca.key \
-    -days 3650 \
-    -subj '/O=Redis Test/CN=Certificate Authority' \
-    -out ${dir}/ca.crt
 
 # Create openssl config to generate specific certs
-cat > ${dir}/openssl.cnf <<_END_
+[ -f ${dir}/openssl.cnf ] || cat > ${dir}/openssl.cnf <<_END_
 [ server_cert ]
 keyUsage = digitalSignature, keyEncipherment
 nsCertType = server
@@ -53,15 +61,25 @@ keyUsage = digitalSignature, keyEncipherment
 nsCertType = client
 _END_
 
+# Take specific keypair name to generate
+name=$1
+minutes=$2
 
-# Create cert's with 1 minute until expiring (60min * 24h - 1 min)
-#generate_cert redis "Generic-cert" "-1439m"
+faketime="+0m"
 
-#generate_cert <name> <cn> <faketime> <options>
-generate_cert redis      "redis"      "+0m" "-extfile ${dir}/openssl.cnf -extensions server_cert"
-generate_cert exporter-s "exporter-s" "+0m" "-extfile ${dir}/openssl.cnf -extensions server_cert"
-generate_cert exporter-c "exporter-c" "+0m" "-extfile ${dir}/openssl.cnf -extensions client_cert"
-generate_cert curl       "curl"       "+0m" "-extfile ${dir}/openssl.cnf -extensions client_cert"
+# Create cert's with X minute until expiring (60min * 24h - X min),
+# example: 2 give faketime="-1438m"
+[[ ! -z $minutes ]] && faketime="-$((1440-$minutes))m"
+
+# Generate CA if no specific keypair name given
+[[ -z $name || "$name" == "ca" ]]         && generate_ca
+
+# Generate if no argument, or specific given
+# generate_cert <name> <cn> <faketime> <options>
+[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      "redis"      $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s "exporter-s" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c "exporter-c" $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       "curl"       $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key
