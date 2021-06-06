@@ -10,13 +10,20 @@ ls -la /tmp/tls-data
 #### Check expiry date of cert
 openssl x509 -enddate -noout -in /tmp/tls-data/redis.crt
 
+### Build redis-tls-updater
+See tools/redis-tls-updater/README.md
+
+
 ## Setup
 
 ### Setup K8s
 kind create cluster --config manifests/kind-config.yaml
 k get nodes
 
-### Setup redis and exporter
+### Upload redis-tls-updater image
+kind load docker-image redis-tls-updater:0.1.0
+
+### Setup redis, exporter and redis-tls-updater
 kubectl create -f manifests/k8s-redis-and-exporter-deployment.yaml
 
 #### Check pods

@@ -65,6 +65,25 @@ spec:
         - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
           value: '/tls-data/exporter-s.crt'
 
+      - name: redis-tls-updater
+        image: redis-tls-updater:0.1.0
+        volumeMounts:
+        - mountPath: /tls-data
+          name: tls-volume
+        env:
+        - name: WATCH_FILES
+          value: '/tls-data/redis.crt:/tls-data/redis.key'
+        - name: REDIS_TLS_CLIENT_CERT_FILE
+          value: '/tls-data/exporter-c.crt'
+        - name: REDIS_TLS_CLIENT_KEY_FILE
+          value: '/tls-data/exporter-c.key'
+        - name: REDIS_TLS_CA_CERT_FILE
+          value: '/tls-data/ca.crt'
+        - name: REDIS_SKIP_TLS_VERIFICATION
+          value: 'true'
+        - name: REDIS_URI
+          value: 'rediss://localhost:6379'
+
       volumes:
       - name: tls-volume
         hostPath:

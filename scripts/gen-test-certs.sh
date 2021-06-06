@@ -3,9 +3,7 @@
 # Generates TLS certificates:
 #
 #   /tmp/tls-data/ca.{crt,key}          Self signed CA certificate.
-#   /tmp/tls-data/redis.{crt,key}       A certificate with no key usage/policy restrictions.
-#   /tmp/tls-data/exporter.{crt,key}    A certificate with no key usage/policy restrictions.
-#   /tmp/tls-data/client.{crt,key}      A certificate with no key usage/policy restrictions.
+#   ...
 dir=/tmp/tls-data
 
 generate_cert() {
