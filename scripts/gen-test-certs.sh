@@ -11,7 +11,8 @@ dir=/tmp/tls-data
 generate_cert() {
     local name=$1
     local cn="$2"
-    local opts="$3"
+    local faketime="$3"
+    local opts="$4"
 
     local keyfile=${dir}/${name}.key
     local certfile=${dir}/${name}.crt
@@ -21,15 +22,16 @@ generate_cert() {
         -new -sha256 \
         -subj "/O=Redis Test/CN=$cn" \
         -key $keyfile | \
-        openssl x509 \
-            -req -sha256 \
-            -CA ${dir}/ca.crt \
-            -CAkey ${dir}/ca.key \
-            -CAserial ${dir}/ca.txt \
-            -CAcreateserial \
-            -days 365 \
-            $opts \
-            -out $certfile
+        faketime -f ${faketime} \
+            openssl x509 \
+                -req -sha256 \
+                -CA ${dir}/ca.crt \
+                -CAkey ${dir}/ca.key \
+                -CAserial ${dir}/ca.txt \
+                -CAcreateserial \
+                -days 1 \
+                $opts \
+                -out $certfile
 }
 
 # Create CA
@@ -42,8 +44,9 @@ openssl req \
     -subj '/O=Redis Test/CN=Certificate Authority' \
     -out ${dir}/ca.crt
 
-# Create cert's
-generate_cert redis "Generic-cert"
+# Create cert's with 1 minute until expiring (60min * 24h - 1 min)
+generate_cert redis "Generic-cert" "-1439m"
+#generate_cert redis "Generic-cert" "+0m"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key

@@ -7,11 +7,14 @@
 ./scripts/gen-test-certs.sh
 ls -la /tmp/tls-data
 
+#### Check expiry date of cert
+openssl x509 -enddate -noout -in /tmp/tls-data/redis.crt
 
 ## Setup
 
 ### Setup K8s
 kind create cluster --config manifests/kind-config.yaml
+k get nodes
 
 ### Setup redis and exporter
 kubectl create -f manifests/k8s-redis-and-exporter-deployment.yaml
@@ -32,18 +35,18 @@ kubectl apply -f manifests/curlpod.yaml
 kubectl get pods -o wide
 
 
-#### Connect to redis_exported metrics using TLS (insecure needed due to CN in redis.crt)
-kubectl exec -it curlpod -- curl -vvv --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt --insecure https://10.244.0.4:9121/metrics
+#### Connect to redis_exported metrics using TLS (insecure needed due to CN in redis.crt dont points to IP)
+kubectl exec -it curlpod -- curl -vvv --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt --insecure https://10.244.0.5:9121/metrics
 
 #### Connect to redis using redis-cli and TLS
 kubectl exec -it redis-674d85dcc9-kc5rv -c redis -- redis-cli --tls --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt INFO
 
 #### Connect to redis (when TLS is NOT enabled!)
-kubectl exec -it curlpod -- curl -vvv telnet://10.244.0.4:6379
+kubectl exec -it curlpod -- curl -vvv telnet://10.244.0.5:6379
 INFO
 
 #### Connect to redis_exported metrics (when TLS is NOT enabled!)
-kubectl exec -it curlpod -- curl -vvv http://10.244.0.4:9121/metrics
+kubectl exec -it curlpod -- curl -vvv http://10.244.0.5:9121/metrics
 
 
 ## Debug by adding a ephemeral container with tcpdump
