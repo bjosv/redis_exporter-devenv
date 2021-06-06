@@ -36,7 +36,7 @@ kubectl get pods -o wide
 
 
 #### Connect to redis_exported metrics using TLS (insecure needed due to CN in redis.crt dont points to IP)
-kubectl exec -it curlpod -- curl -vvv --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt --insecure https://10.244.0.5:9121/metrics
+kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt --insecure https://10.244.0.5:9121/metrics
 
 #### Connect to redis using redis-cli and TLS
 kubectl exec -it redis-674d85dcc9-kc5rv -c redis -- redis-cli --tls --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt INFO

@@ -55,15 +55,15 @@ spec:
         - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
           value: '/tls-data/ca.crt'
         - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
-          value: '/tls-data/redis.key'
+          value: '/tls-data/exporter-c.key'
         - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
-          value: '/tls-data/redis.crt'
+          value: '/tls-data/exporter-c.crt'
 
         # Metrics endpoint
         - name: REDIS_EXPORTER_TLS_SERVER_KEY_FILE
-          value: '/tls-data/redis.key'
+          value: '/tls-data/exporter-s.key'
         - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
-          value: '/tls-data/redis.crt'
+          value: '/tls-data/exporter-s.crt'
 
       volumes:
       - name: tls-volume

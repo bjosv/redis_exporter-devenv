@@ -44,9 +44,26 @@ openssl req \
     -subj '/O=Redis Test/CN=Certificate Authority' \
     -out ${dir}/ca.crt
 
+# Create openssl config to generate specific certs
+cat > ${dir}/openssl.cnf <<_END_
+[ server_cert ]
+keyUsage = digitalSignature, keyEncipherment
+nsCertType = server
+
+[ client_cert ]
+keyUsage = digitalSignature, keyEncipherment
+nsCertType = client
+_END_
+
+
 # Create cert's with 1 minute until expiring (60min * 24h - 1 min)
-generate_cert redis "Generic-cert" "-1439m"
-#generate_cert redis "Generic-cert" "+0m"
+#generate_cert redis "Generic-cert" "-1439m"
+
+#generate_cert <name> <cn> <faketime> <options>
+generate_cert redis      "redis"      "+0m" "-extfile ${dir}/openssl.cnf -extensions server_cert"
+generate_cert exporter-s "exporter-s" "+0m" "-extfile ${dir}/openssl.cnf -extensions server_cert"
+generate_cert exporter-c "exporter-c" "+0m" "-extfile ${dir}/openssl.cnf -extensions client_cert"
+generate_cert curl       "curl"       "+0m" "-extfile ${dir}/openssl.cnf -extensions client_cert"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key
