@@ -28,7 +28,8 @@ spec:
         - mountPath: /tls-data
           name: tls-volume
         command: ["redis-server"]
-        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--tls-auth-clients", "no", "--loglevel", "debug"]
+        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--loglevel", "debug"]
+        # args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--tls-auth-clients", "no", "--loglevel", "debug"]
 
       - name: redis-exporter
         image: oliver006/redis_exporter:own
@@ -47,11 +48,16 @@ spec:
         - name: REDIS_EXPORTER_NAMESPACE
           value: ''
 
+        # Temporary add this fix for
+        # DialURL() failed, err: x509: certificate relies on legacy Common Name field, use SANs or temporarily enable Common Name matching with GODEBUG=x509ignoreCN=0"
+        - name: GODEBUG
+          value: 'x509ignoreCN=0'
+
         # Redis client
         - name: REDIS_ADDR
           value: 'rediss://localhost:6379'
-        - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
-          value: 'true'
+        # - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
+        #   value: 'true'
         - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
           value: '/tls-data/ca.crt'
         - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
@@ -79,8 +85,8 @@ spec:
           value: '/tls-data/exporter-c.key'
         - name: REDIS_TLS_CA_CERT_FILE
           value: '/tls-data/ca.crt'
-        - name: REDIS_SKIP_TLS_VERIFICATION
-          value: 'true'
+        # - name: REDIS_SKIP_TLS_VERIFICATION
+        #   value: 'true'
         - name: REDIS_URI
           value: 'rediss://localhost:6379'
 

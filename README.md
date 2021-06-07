@@ -8,7 +8,9 @@
 ls -la /tmp/tls-data
 
 #### Check expiry date of cert
-openssl x509 -enddate -noout -in /tmp/tls-data/redis.crt
+openssl x509 -enddate -noout -in /tmp/tls-data/exporter-c.crt
+#### Check cert
+openssl x509 -text -in /tmp/tls-data/exporter-c.crt
 
 ### Build redis-tls-updater
 See tools/redis-tls-updater/README.md
@@ -33,26 +35,29 @@ kubectl create -f manifests/k8s-redis-and-exporter-deployment.yaml
 ### Deploy tester pod
 kubectl apply -f manifests/curlpod.yaml
 
-### Check pods and logs
-kubectl get pods -o wide
-k logs redis-859dfb6b54-lvhrw redis
-k logs redis-859dfb6b54-lvhrw redis-exporter
-
 ### Get IP for redis-xxx pod
 kubectl get pods -o wide
 PODIP=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].status.podIP}")
 POD=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].metadata.name}")
 
-### Update Redis keypair
+### Check pods and logs
+k logs $POD redis
+k logs $POD redis-exporter
+k logs $POD redis-tls-updater
+
+### Add key to redis
 
 #### Connect to redis using redis-cli and TLS
 > Set key
-kubectl exec -it $POD -c redis -- redis-cli --tls --cert /tls-data/redis.crt --key /tls-data/redis.key --cacert /tls-data/ca.crt SET key value
+kubectl exec -it $POD -c redis -- redis-cli --tls --cert /tls-data/exporter-c.crt --key /tls-data/exporter-c.key --cacert /tls-data/ca.crt SET key value
 
 #### Connect to redis_exported metrics using TLS (insecure needed due to CN in redis.crt don't points to IP)
 > Get number of keys
+kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt --insecure https://$PODIP:9121/metrics
 kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt --insecure https://$PODIP:9121/metrics | grep 'db_keys{db="db0"}'
 
+
+### Update Redis keypair
 
 #### Connect to redis (when TLS is NOT enabled!)
 kubectl exec -it curlpod -- curl -vvv telnet://10.244.0.5:6379
@@ -68,3 +73,4 @@ kubectl alpha debug -i redis-674d85dcc9-kc5rv --image=nicolaka/netshoot --target
 
 ## Links
 https://downey.io/blog/kubernetes-ephemeral-debug-container-tcpdump/
+https://geekflare.com/san-ssl-certificate/

@@ -76,10 +76,10 @@ faketime="+0m"
 
 # Generate if no argument, or specific given
 # generate_cert <name> <cn> <faketime> <options>
-[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      "redis"      $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s "exporter-s" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c "exporter-c" $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
-[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       "curl"       $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       "curlpod"   $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key
