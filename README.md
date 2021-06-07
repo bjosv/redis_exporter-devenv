@@ -2,9 +2,9 @@
 
 ## Prepare
 
-### Create TLS certs that expire in 3 minutes
+### Create TLS certs that expire in 4 minutes
 
-./scripts/gen-test-certs.sh "" 3
+./scripts/gen-test-certs.sh "" 4
 ls -la /tmp/tls-data
 
 #### Check expiry date of cert
@@ -13,6 +13,9 @@ openssl x509 -enddate -noout -in /tmp/tls-data/redis.crt
 ### Build redis-tls-updater
 See tools/redis-tls-updater/README.md
 
+### Build own redis_exporter
+cd redis_exporter
+docker build -f docker/Dockerfile.amd64 -t oliver006/redis_exporter:own .
 
 ## Setup
 
@@ -20,30 +23,23 @@ See tools/redis-tls-updater/README.md
 kind create cluster --config manifests/kind-config.yaml
 k get nodes
 
-### Upload redis-tls-updater image
+### Upload images
 kind load docker-image redis-tls-updater:0.1.0
+kind load docker-image oliver006/redis_exporter:own
 
 ### Setup redis, exporter and redis-tls-updater
 kubectl create -f manifests/k8s-redis-and-exporter-deployment.yaml
 
-#### Check pods
-kubectl get pods -o wide
-kubectl describe pod redis-6547f5d866-s48bj
-
-#### Check logs
-k logs redis-859dfb6b54-lvhrw redis
-k logs redis-859dfb6b54-lvhrw redis-exporter
-
-
 ### Deploy tester pod
 kubectl apply -f manifests/curlpod.yaml
 
-> Get IP for redis-xxx pod
+### Check pods and logs
 kubectl get pods -o wide
+k logs redis-859dfb6b54-lvhrw redis
+k logs redis-859dfb6b54-lvhrw redis-exporter
 
-
-## XPs
-
+### Get IP for redis-xxx pod
+kubectl get pods -o wide
 PODIP=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].status.podIP}")
 POD=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].metadata.name}")
 
