@@ -1,10 +1,22 @@
-# redis_exporter develop environment
+# redis_exporter development environment
 
-## Prepare
+## Build and test redis_exporter
 
-### Create TLS certs that expire in 4 minutes
+> Run tests within docker-composer
+make docker-test
 
-./scripts/gen-test-certs.sh "" 4
+> Enable logging in tests:
+> Add in testcase: log.SetLevel(log.DebugLevel)
+
+> Run CI local
+drone exec --event=pull_request | tee -a log.txt
+
+
+## Prepare deployment
+
+### Create TLS certs that expire in 5 minutes
+
+./scripts/gen-test-certs.sh "" 5
 ls -la /tmp/tls-data
 
 #### Check expiry date of cert
@@ -18,6 +30,7 @@ See tools/redis-tls-updater/README.md
 ### Build own redis_exporter
 cd redis_exporter
 docker build -f docker/Dockerfile.amd64 -t oliver006/redis_exporter:own .
+> Update to use it: manifests/k8s-redis-and-exporter-deployment.yaml
 
 ## Setup
 
@@ -40,6 +53,9 @@ kubectl get pods -o wide
 PODIP=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].status.podIP}")
 POD=$(kubectl get pods -l app=redis -o=jsonpath="{.items[*].metadata.name}")
 
+### Update redis-exporter server keypair to use correct Common Name / IP
+./scripts/gen-test-certs.sh exporter-s 5 $PODIP
+
 ### Check pods and logs
 k logs $POD redis
 k logs $POD redis-exporter
@@ -51,20 +67,37 @@ k logs $POD redis-tls-updater
 > Set key
 kubectl exec -it $POD -c redis -- redis-cli --tls --cert /tls-data/exporter-c.crt --key /tls-data/exporter-c.key --cacert /tls-data/ca.crt SET key value
 
-#### Connect to redis_exported metrics using TLS (insecure needed due to CN in redis.crt don't points to IP)
-> Get number of keys
-kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt --insecure https://$PODIP:9121/metrics
-kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt --insecure https://$PODIP:9121/metrics | grep 'db_keys{db="db0"}'
-
+#### Connect to redis_exported metrics using TLS
+> Get number of keys, including curl errors
+kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics
+> Get number of keys only
+kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics | grep 'db_keys{db="db0"}'
 
 ### Update Redis keypair
+./scripts/gen-test-certs.sh redis 10
+k logs $POD redis
+k logs $POD redis-exporter
+
+### Update redis-exporter client keypair
+./scripts/gen-test-certs.sh exporter-c 10
+k logs $POD redis-exporter
+
+### Update redis-exporter server keypair (using correct Common Name)
+./scripts/gen-test-certs.sh exporter-s 10 $PODIP
+k logs $POD redis-exporter
+
+### Update curl keypair
+./scripts/gen-test-certs.sh curl 10
+
+
+### TCP only
 
 #### Connect to redis (when TLS is NOT enabled!)
-kubectl exec -it curlpod -- curl -vvv telnet://10.244.0.5:6379
+kubectl exec -it curlpod -- curl -vvv telnet://$PODIP:6379
 INFO
 
 #### Connect to redis_exported metrics (when TLS is NOT enabled!)
-kubectl exec -it curlpod -- curl -vvv http://10.244.0.5:9121/metrics
+kubectl exec -it curlpod -- curl -vvv http://$PODIP:9121/metrics
 
 
 ## Debug by adding a ephemeral container with tcpdump

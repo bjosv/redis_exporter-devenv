@@ -61,9 +61,13 @@ keyUsage = digitalSignature, keyEncipherment
 nsCertType = client
 _END_
 
-# Take specific keypair name to generate
+# Arguments:
+#   Generated a specific keypair or empty string for all
 name=$1
+#   Minutes until certs expire, or skip for 1 day until expire
 minutes=$2
+#   Override default common name i.e the server host name
+cn=${3:-'localhost'}
 
 faketime="+0m"
 
@@ -76,10 +80,10 @@ faketime="+0m"
 
 # Generate if no argument, or specific given
 # generate_cert <name> <cn> <faketime> <options>
-[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c "localhost" $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
-[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       "curlpod"   $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      $cn $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s $cn $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
+[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c $cn $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       $cn $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key
