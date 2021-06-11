@@ -9,10 +9,7 @@ WORKDIR /build
 COPY go.mod /build
 COPY go.sum /build
 COPY redis-tls-updater.go /build
-#RUN go build -ldflags "-linkmode external -extldflags -static" -a main.go
 RUN go build -ldflags '-extldflags -static' -a redis-tls-updater.go
-RUN pwd
-RUN ls
 
 FROM scratch
 COPY --from=builder /build/redis-tls-updater /app/
