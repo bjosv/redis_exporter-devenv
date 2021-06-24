@@ -12,6 +12,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9121"
+        prometheus.io/scheme: "https"
       labels:
         app: redis
     spec:
@@ -46,8 +47,6 @@ spec:
         env:
         - name: REDIS_EXPORTER_DEBUG
           value: 'true'
-        - name: REDIS_EXPORTER_NAMESPACE
-          value: ''
 
         # Temporary add this fix for
         # DialURL() failed, err: x509: certificate relies on legacy Common Name field, use SANs or temporarily enable Common Name matching with GODEBUG=x509ignoreCN=0"

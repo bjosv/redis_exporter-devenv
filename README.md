@@ -38,6 +38,12 @@ docker build -f docker/Dockerfile.amd64 -t oliver006/redis_exporter:own .
 kind create cluster --config manifests/kind-config.yaml
 k get nodes
 
+### Setup Prometheus
+kubectl create -f manifests/prometheus.yaml
+kubectl port-forward -n monitoring service/prometheus-service 8080 &
+xdg-open http://localhost:8080/targets
+> Open the Graphs tab later, and search for: redis_db_keys
+
 ### Upload images
 kind load docker-image redis-tls-updater:0.1.0
 kind load docker-image oliver006/redis_exporter:own
