@@ -30,7 +30,7 @@ See tools/redis-tls-updater/README.md
 ### Build own redis_exporter
 cd redis_exporter
 docker build -f docker/Dockerfile.amd64 -t oliver006/redis_exporter:own .
-> Update to use it: manifests/k8s-redis-and-exporter-deployment.yaml
+> Update to use it: manifests/redis-and-exporter-deployment.yaml
 
 ## Setup
 
@@ -43,7 +43,7 @@ kind load docker-image redis-tls-updater:0.1.0
 kind load docker-image oliver006/redis_exporter:own
 
 ### Setup redis, exporter and redis-tls-updater
-kubectl create -f manifests/k8s-redis-and-exporter-deployment.yaml
+kubectl create -f manifests/redis-and-exporter-deployment.yaml
 
 ### Deploy tester pod
 kubectl apply -f manifests/curlpod.yaml
