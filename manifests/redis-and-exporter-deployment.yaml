@@ -41,6 +41,22 @@ spec:
             memory: 100Mi
         ports:
         - containerPort: 9121
+        livenessProbe:
+          httpGet:
+            # HTTPS request skips the certificate verification
+            scheme: HTTPS
+            path: /metrics
+            port: 9121
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            # HTTPS request skips the certificate verification
+            scheme: HTTPS
+            path: /metrics
+            port: 9121
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
         volumeMounts:
         - mountPath: /tls-data
           name: tls-volume
