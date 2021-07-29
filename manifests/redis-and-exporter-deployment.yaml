@@ -64,11 +64,6 @@ spec:
         - name: REDIS_EXPORTER_DEBUG
           value: 'true'
 
-        # Temporary add this fix for
-        # DialURL() failed, err: x509: certificate relies on legacy Common Name field, use SANs or temporarily enable Common Name matching with GODEBUG=x509ignoreCN=0"
-        - name: GODEBUG
-          value: 'x509ignoreCN=0'
-
         # Redis client
         - name: REDIS_ADDR
           value: 'rediss://localhost:6379'
@@ -93,9 +88,6 @@ spec:
         - mountPath: /tls-data
           name: tls-volume
         env:
-        # DialURL() failed, err: x509: certificate relies on legacy Common Name field, use SANs or temporarily enable Common Name matching with GODEBUG=x509ignoreCN=0"
-        - name: GODEBUG
-          value: 'x509ignoreCN=0'
         - name: WATCH_FILES
           value: '/tls-data/redis.crt:/tls-data/redis.key'
         - name: REDIS_TLS_CLIENT_CERT_FILE

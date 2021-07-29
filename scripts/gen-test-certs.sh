@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Generates TLS certificates:
 #
@@ -10,7 +10,7 @@ generate_cert() {
     local name=$1
     local cn="$2"
     local faketime="$3"
-    local opts="$4"
+    local type="$4"
 
     local keyfile=${dir}/${name}.key
     local certfile=${dir}/${name}.crt
@@ -33,7 +33,11 @@ generate_cert() {
                 -CAserial ${dir}/ca.txt \
                 -CAcreateserial \
                 -days 1 \
-                $opts \
+                -extfile <(printf "[ EXT ]
+                                  keyUsage = digitalSignature, keyEncipherment
+                                  nsCertType = $type
+                                  subjectAltName = DNS:$cn") \
+                -extensions EXT \
                 -out $certfile
 }
 
@@ -49,17 +53,6 @@ generate_ca() {
 
 
 mkdir -p ${dir}
-
-# Create openssl config to generate specific certs
-[ -f ${dir}/openssl.cnf ] || cat > ${dir}/openssl.cnf <<_END_
-[ server_cert ]
-keyUsage = digitalSignature, keyEncipherment
-nsCertType = server
-
-[ client_cert ]
-keyUsage = digitalSignature, keyEncipherment
-nsCertType = client
-_END_
 
 # Arguments:
 #   Generated a specific keypair or empty string for all
@@ -79,11 +72,13 @@ faketime="+0m"
 [[ -z $name || "$name" == "ca" ]]         && generate_ca
 
 # Generate if no argument, or specific given
-# generate_cert <name> <cn> <faketime> <options>
-[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      $cn $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s $cn $faketime "-extfile ${dir}/openssl.cnf -extensions server_cert"
-[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c $cn $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
-[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       $cn $faketime "-extfile ${dir}/openssl.cnf -extensions client_cert"
+# generate_cert <name> <common-name> <faketime> <cert-type>
+
+
+[[ -z $name || "$name" == "redis" ]]      && generate_cert redis      $cn $faketime "server"
+[[ -z $name || "$name" == "exporter-s" ]] && generate_cert exporter-s $cn $faketime "server"
+[[ -z $name || "$name" == "exporter-c" ]] && generate_cert exporter-c $cn $faketime "client"
+[[ -z $name || "$name" == "curl" ]]       && generate_cert curl       $cn $faketime "client"
 
 # Let the pods read the key files
 chmod 644 ${dir}/*.key
