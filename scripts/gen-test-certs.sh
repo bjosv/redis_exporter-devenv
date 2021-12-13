@@ -19,9 +19,12 @@ generate_cert() {
     echo "Generate keypair for $name using faketime=$faketime"
     echo "*********************************************************"
     echo
-    # TODO: Depending on if `cn` is an IP or a dns name, do:
-    # subjectAltName = DNS:$cn
-    # subjectAltName = IP:$cn
+
+    # Set domain for subjectAltName (DNS or IP)
+    local domain="DNS"
+    if [[ $cn =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        domain="IP"
+    fi
 
     openssl genrsa -out $keyfile 2048
     openssl req \
@@ -39,7 +42,7 @@ generate_cert() {
                 -extfile <(printf "[ EXT ]
                                   keyUsage = digitalSignature, keyEncipherment
                                   nsCertType = $type
-                                  subjectAltName = IP:$cn") \
+                                  subjectAltName = $domain:$cn") \
                 -extensions EXT \
                 -out $certfile
 }

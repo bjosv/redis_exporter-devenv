@@ -29,7 +29,7 @@ See tools/redis-tls-updater/README.md
 
 ### Build own redis_exporter
 cd redis_exporter
-docker build -f docker/Dockerfile.amd64 -t oliver006/redis_exporter:own .
+docker build --build-arg GOARCH=amd64 -f docker/Dockerfile -t oliver006/redis_exporter:own .
 > Update to use it: manifests/redis-and-exporter-deployment.yaml
 
 ## Setup
