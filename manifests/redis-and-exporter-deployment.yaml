@@ -81,6 +81,8 @@ spec:
           value: '/tls-data/exporter-s.key'
         - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
           value: '/tls-data/exporter-s.crt'
+        # - name: REDIS_EXPORTER_TLS_SERVER_CA_CERT_FILE
+        #   value: '/tls-data/ca.crt'
 
       - name: redis-tls-updater
         image: redis-tls-updater:0.1.0

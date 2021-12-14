@@ -73,9 +73,17 @@ k logs $POD redis-tls-updater
 > Set key
 kubectl exec -it $POD -c redis -- redis-cli --tls --cert /tls-data/exporter-c.crt --key /tls-data/exporter-c.key --cacert /tls-data/ca.crt SET key value
 
-#### Connect to redis_exported metrics using TLS
+#### TLS: connect to redis_exported metrics using curl (Should fail for "mTLS")
+> Get number of keys, including curl errors
+kubectl exec -it curlpod -- curl -vvv --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics
+
+> Log from redis_exporter:
+> 2021/12/14 10:49:53 http: TLS handshake error from 10.244.0.6:35188: tls: client didn't provide a certificate
+
+#### "mTLS": connect to redis_exported metrics using curl
 > Get number of keys, including curl errors
 kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics
+
 > Get number of keys only
 kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics | grep 'db_keys{db="db0"}'
 
@@ -110,6 +118,33 @@ kubectl exec -it curlpod -- curl -vvv http://$PODIP:9121/metrics
 kubectl alpha debug -i redis-674d85dcc9-kc5rv --image=nicolaka/netshoot --target=redis -- tcpdump -i eth0
 kubectl alpha debug -i redis-674d85dcc9-kc5rv --image=nicolaka/netshoot --target=redis -- tcpdump -i eth0 -w - | wireshark -k -i -
 
+
+## Other
+
+### TLS
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+
+### TLS with mutual auth. (aka "mTLS")
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.3 (IN), TLS handshake, Request CERT (13):            *
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.3 (OUT), TLS handshake, Certificate (11):            *
+* TLSv1.3 (OUT), TLS handshake, CERT verify (15):            *
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+
 ## Links
 https://downey.io/blog/kubernetes-ephemeral-debug-container-tcpdump/
 https://geekflare.com/san-ssl-certificate/
+https://smallstep.com/hello-mtls/doc/server/go
