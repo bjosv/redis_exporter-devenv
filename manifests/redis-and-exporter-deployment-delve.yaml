@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-go1.18-dlv
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+        prometheus.io/scheme: "https"
+        container.apparmor.security.beta.kubernetes.io/redis-exporter: unconfined
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:6.2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - mountPath: /tls-data
+          name: tls-volume
+        command: ["redis-server"]
+        args: ["--tls-port", "6379", "--port", "0", "--tls-cert-file", "/tls-data/redis.crt", "--tls-key-file", "/tls-data/redis.key", "--tls-ca-cert-file", "/tls-data/ca.crt", "--loglevel", "debug"]
+
+      - name: redis-exporter
+        image: oliver006/redis_exporter:1.18-dlv
+        securityContext:
+          capabilities:
+            add:
+            - SYS_PTRACE
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 9121
+        # livenessProbe:
+        #   httpGet:
+        #     # HTTPS request skips the certificate verification
+        #     scheme: HTTPS
+        #     path: /metrics
+        #     port: 9121
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 5
+        # readinessProbe:
+        #   httpGet:
+        #     # HTTPS request skips the certificate verification
+        #     scheme: HTTPS
+        #     path: /metrics
+        #     port: 9121
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /tls-data
+          name: tls-volume
+        env:
+        # - name: REDIS_EXPORTER_DEBUG
+        #   value: 'true'
+
+        # Redis client
+        - name: REDIS_ADDR
+          value: 'rediss://localhost:6379'
+        # - name: REDIS_EXPORTER_SKIP_TLS_VERIFICATION
+        #   value: 'true'
+        - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
+          value: '/tls-data/ca.crt'
+        - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
+          value: '/tls-data/exporter-c.key'
+        - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
+          value: '/tls-data/exporter-c.crt'
+
+        # Metrics endpoint
+        - name: REDIS_EXPORTER_TLS_SERVER_KEY_FILE
+          value: '/tls-data/exporter-s.key'
+        - name: REDIS_EXPORTER_TLS_SERVER_CERT_FILE
+          value: '/tls-data/exporter-s.crt'
+#        - name: REDIS_EXPORTER_TLS_SERVER_CA_CERT_FILE
+#          value: '/tls-data/ca.crt'
+
+      - name: redis-tls-updater
+        image: redis-tls-updater:0.1.0
+        volumeMounts:
+        - mountPath: /tls-data
+          name: tls-volume
+        env:
+        - name: WATCH_FILES
+          value: '/tls-data/redis.crt:/tls-data/redis.key'
+        - name: REDIS_TLS_CLIENT_CERT_FILE
+          value: '/tls-data/exporter-c.crt'
+        - name: REDIS_TLS_CLIENT_KEY_FILE
+          value: '/tls-data/exporter-c.key'
+        - name: REDIS_TLS_CA_CERT_FILE
+          value: '/tls-data/ca.crt'
+        # - name: REDIS_SKIP_TLS_VERIFICATION
+        #   value: 'true'
+        - name: REDIS_URI
+          value: 'rediss://localhost:6379'
+
+      volumes:
+      - name: tls-volume
+        hostPath:
+          # directory location on host
+          path: /tls-data

@@ -83,6 +83,7 @@ data:
             replacement: '${1}'
 
       - job_name: 'kubernetes-pods'
+        scrape_interval: 5s
         kubernetes_sd_configs:
         - role: pod
         tls_config:
