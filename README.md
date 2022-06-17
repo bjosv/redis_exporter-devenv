@@ -89,7 +89,7 @@ k logs $POD redis-exporter
 k logs $POD redis-tls-updater
 ```
 
-### Add key to redis
+### Tests
 
 #### Connect to redis using redis-cli and TLS
 > Set key
@@ -108,6 +108,15 @@ kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/
 
 > Get number of keys only
 kubectl exec -it curlpod -- curl -vvv --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics | grep 'db_keys{db="db0"}'
+
+#### TLS: connect to redis_exported metrics using curl using unaccepted TLS version
+
+See config: REDIS_EXPORTER_TLS_SERVER_MIN_VERSION
+
+kubectl exec -it curlpod -- curl -vvv --tlsv1.1 --tls-max 1.1 --cert /tls-data/curl.crt --key /tls-data/curl.key --cacert /tls-data/ca.crt https://$PODIP:9121/metrics
+
+> Should result in
+> curl: (35) error:1409442E:SSL routines:ssl3_read_bytes:tlsv1 alert protocol version
 
 ### Update Redis keypair
 ./scripts/gen-test-certs.sh redis 10
